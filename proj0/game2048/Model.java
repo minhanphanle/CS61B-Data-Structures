@@ -116,11 +116,13 @@ public class Model extends Observable {
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
 
-        int size = board.size();
 
-        for (int col = 0; col < size; col++){
-            boolean columnChanged = columnTilt(col);
-            if (!changed && columnChanged) {changed = true;}
+        if (side == Side.NORTH) {
+            changed = northTilt();
+        } else {
+            board.setViewingPerspective(side);
+            changed = northTilt();
+            board.setViewingPerspective(Side.NORTH);
         }
 
         checkGameOver();
@@ -130,11 +132,20 @@ public class Model extends Observable {
             return changed;
     }
 
+    public boolean northTilt() {
+        int size = board.size();
+        boolean changed = false;
 
+        for (int col = 0; col < size; col++){
+            boolean columnChanged = columnTilt(col);
+            if (!changed && columnChanged) {changed = true;}
+        }
+        return changed;
+    }
     public boolean columnTilt(int column) {
         int size = board.size();
         boolean moved = false;
-        boolean merged = false;
+        boolean prevMerged = false;
 
         for (int row = size - 1; row > 0; row--) {
             // two pointer => the first (column, row) and the second (column, t) will traverse down
@@ -150,39 +161,55 @@ public class Model extends Observable {
                 r -= 1;
             }
 
-
             Tile tile2 = board.tile(column, r);
 
-            // no value left to move
+            // no non-null tile left to move
             if (r == 0 && tile2 == null) {
                 return moved;
             }
 
-            // move to the previous moved tile since they have the same value
-            if (row != size - 1) {
-                int previousVal = board.tile(column, row + 1).value();
-                if (tile2.value() == previousVal && !merged) {
-                    board.move(column, row + 1, tile2);
-                    score += board.tile(column, row + 1).value();
-                    merged = true;
-                    moved = true;
-                    continue;
-                }
+            if (tile1 != null && tile2.value() == tile1.value()) {
+                sameVal = true;
             }
 
-            // merge
             if (sameVal) {
+                // merge current tile
                 board.move(column, row, tile2);
-                score += tile1.value();
-                merged = true;
+                score += tile2.value() * 2;
+                prevMerged = true;
                 moved = true;
+            } else if (row != size - 1 && tile1 == null) {
+                int prevEmptyRow = 0;
+                for (int prevRow = row + 1; prevRow < size; prevRow++) {
+                    if (board.tile(column, prevRow) == null) {
+                        prevEmptyRow += 1;
+                    } else {
+                        break;
+                    }
+                }
+                int previousVal = board.tile(column, row + prevEmptyRow + 1).value();
+                if (tile2.value() == previousVal && !prevMerged) {
+                    // merge previously moved tile
+                    board.move(column, row + prevEmptyRow + 1, tile2);
+                    score += board.tile(column, row + prevEmptyRow + 1).value();
+                    moved = true;
+                } else {
+                    // fill the blank => not merged => set prevMerged = false;
+                    board.move(column, row + prevEmptyRow, tile2);
+                    moved = true;
+                    prevMerged = false;
+                }
+            } else if (tile1 == null) {
+                // upper most row is null
+                board.move(column, row, tile2);
+                moved = true;
+                prevMerged = false;
             } else {
-                // tile (column, row) is null
-                board.move(column, row, tile2);
+                // Non adjacent no merge
+                board.move(column, row - 1, tile2);
                 moved = true;
+                prevMerged = false;
             }
-            // we don't care about how many blank are there, we just care about whether there's blank to move
-
         }
         return moved;
     }
