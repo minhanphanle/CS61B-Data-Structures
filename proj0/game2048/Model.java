@@ -1,11 +1,13 @@
 package game2048;
 
+import java.util.Arrays;
 import java.util.Formatter;
+import java.util.List;
 import java.util.Observable;
 
 
 /** The state of a game of 2048.
- *  @author TODO: YOUR NAME HERE
+ *  @author Minh-An Phan
  */
 public class Model extends Observable {
     /** Current contents of the board. */
@@ -94,7 +96,7 @@ public class Model extends Observable {
         setChanged();
     }
 
-    /** Tilt the board toward SIDE. Return true iff this changes the board.
+    /**   the board toward SIDE. Return true iff this changes the board.
      *
      * 1. If two Tile objects are adjacent in the direction of motion and have
      *    the same value, they are merged into one Tile of twice the original
@@ -114,11 +116,75 @@ public class Model extends Observable {
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
 
+        int size = board.size();
+
+        for (int col = 0; col < size; col++){
+            boolean columnChanged = columnTilt(col);
+            if (!changed && columnChanged) {changed = true;}
+        }
+
         checkGameOver();
         if (changed) {
             setChanged();
         }
-        return changed;
+            return changed;
+    }
+
+
+    public boolean columnTilt(int column) {
+        int size = board.size();
+        boolean moved = false;
+        boolean merged = false;
+
+        for (int row = size - 1; row > 0; row--) {
+            // two pointer => the first (column, row) and the second (column, t) will traverse down
+            int r = row - 1;
+            Tile tile1 = board.tile(column, row);
+            boolean sameVal = false;
+
+            while (board.tile(column, r) == null && r > 0) {
+                if (tile1 != null && board.tile(column, r) != null && board.tile(column, r).value() == tile1.value()) {
+                    sameVal = true;
+                    break;
+                }
+                r -= 1;
+            }
+
+
+            Tile tile2 = board.tile(column, r);
+
+            // no value left to move
+            if (r == 0 && tile2 == null) {
+                return moved;
+            }
+
+            // move to the previous moved tile since they have the same value
+            if (row != size - 1) {
+                int previousVal = board.tile(column, row + 1).value();
+                if (tile2.value() == previousVal && !merged) {
+                    board.move(column, row + 1, tile2);
+                    score += board.tile(column, row + 1).value();
+                    merged = true;
+                    moved = true;
+                    continue;
+                }
+            }
+
+            // merge
+            if (sameVal) {
+                board.move(column, row, tile2);
+                score += tile1.value();
+                merged = true;
+                moved = true;
+            } else {
+                // tile (column, row) is null
+                board.move(column, row, tile2);
+                moved = true;
+            }
+            // we don't care about how many blank are there, we just care about whether there's blank to move
+
+        }
+        return moved;
     }
 
     /** Checks if the game is over and sets the gameOver variable
@@ -137,7 +203,16 @@ public class Model extends Observable {
      *  Empty spaces are stored as null.
      * */
     public static boolean emptySpaceExists(Board b) {
-        // TODO: Fill in this function.
+
+        int size = b.size();
+
+        for (int row = 0; row < size; row++) {
+            for (int col = 0; col < size; col++ ) {
+                if (b.tile(col, row) == null) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -147,7 +222,18 @@ public class Model extends Observable {
      * given a Tile object t, we get its value with t.value().
      */
     public static boolean maxTileExists(Board b) {
-        // TODO: Fill in this function.
+
+        int size = b.size();
+
+        for (int row = 0; row < size; row++) {
+            for (int col = 0; col < size; col++) {
+                if ((b.tile(col, row) != null) && (b.tile(col, row).value() == MAX_PIECE)) {
+                    return true;
+                }
+            }
+        }
+
+
         return false;
     }
 
@@ -158,9 +244,59 @@ public class Model extends Observable {
      * 2. There are two adjacent tiles with the same value.
      */
     public static boolean atLeastOneMoveExists(Board b) {
-        // TODO: Fill in this function.
+
+        boolean oneEmptySpace = emptySpaceExists(b);
+
+        if (oneEmptySpace) {
+            return true;
+        }
+
+        int size = b.size();
+
+        for (int row = 0; row < size; row++) {
+            for (int col = 0; col < size; col++) {
+                Tile tile = b.tile(col, row);
+                if (tile == null) continue;
+                int tileVal = tile.value();
+
+                for (int i = row - 1; i < row + 2; i++){
+                    if (i < 0 || i >= size) continue;
+                    for (int j = col - 1; j < col + 2; j++) {
+                        if (i == row && j == col) continue;
+                        if (j < 0 || j >= size) continue;
+                        Tile neighbor = b.tile(j, i);
+                        if (neighbor == null) continue;
+                        int neighborVal = neighbor.value();
+
+                        boolean notDiagonal = true;
+
+                        int[][] diagArray = {
+                                new int[]{col - 1, row - 1},
+                                new int[]{col + 1, row - 1},
+                                new int[]{col - 1, row + 1},
+                                new int[]{col + 1, row + 1}
+                        };
+
+                        for (int[] coord : diagArray) {
+                            if (Arrays.equals(coord, new int[]{j, i})){
+                                notDiagonal = false;
+                                break;
+                            }
+                        }
+
+                        if ((neighborVal == tileVal) && notDiagonal) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
         return false;
     }
+
+
+
 
 
     @Override
