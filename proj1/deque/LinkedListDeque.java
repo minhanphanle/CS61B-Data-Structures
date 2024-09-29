@@ -2,14 +2,14 @@ package deque;
 import java.util.Iterator;
 
 /** Circular Doubly Linked List */
-public class LinkedListDeque<RandType> implements Iterable<RandType>, Deque<RandType> {
+public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
 
     private class RandNode {
-        public RandType item;
+        public T item;
         public RandNode next;
         public RandNode prev;
 
-        public RandNode(RandType i) {
+        public RandNode(T i) {
             prev = null;
             item = i;
             next = null;
@@ -35,7 +35,7 @@ public class LinkedListDeque<RandType> implements Iterable<RandType>, Deque<Rand
     }
 
     /** Construct a 1-item LinkedListDeque */
-    public LinkedListDeque(RandType i) {
+    public LinkedListDeque(T i) {
         sentinel = new RandNode();
         RandNode newNode = new RandNode(i);
         sentinel.next = newNode;
@@ -46,13 +46,13 @@ public class LinkedListDeque<RandType> implements Iterable<RandType>, Deque<Rand
         size = 1;
     }
 
-    public Iterator<RandType> iterator() {
+    public Iterator<T> iterator() {
         return new LinkedListDequeIterator();
     }
 
 
 
-    private class LinkedListDequeIterator implements Iterator<RandType> {
+    private class LinkedListDequeIterator implements Iterator<T> {
         private RandNode ptr;
 
         // constructor
@@ -64,8 +64,8 @@ public class LinkedListDeque<RandType> implements Iterable<RandType>, Deque<Rand
             return ptr.item != null;
         }
 
-        public RandType next() {
-            RandType returnItem = ptr.item;
+        public T next() {
+            T returnItem = ptr.item;
             ptr = ptr.next;
             return returnItem;
         }
@@ -91,15 +91,15 @@ public class LinkedListDeque<RandType> implements Iterable<RandType>, Deque<Rand
             return false;
         }
 
-        LinkedListDeque<RandType> castedO = (LinkedListDeque<RandType>) o;
+        LinkedListDeque<T> castedO = (LinkedListDeque<T>) o;
 
 
         if (this.size() != castedO.size()) {
             return false;
         }
 
-        Iterator<RandType> thisIter = this.iterator();
-        Iterator<RandType> castedOIter = castedO.iterator();
+        Iterator<T> thisIter = this.iterator();
+        Iterator<T> castedOIter = castedO.iterator();
 
         // order matters in array deque
         while (thisIter.hasNext()) {
@@ -113,7 +113,7 @@ public class LinkedListDeque<RandType> implements Iterable<RandType>, Deque<Rand
 
 
     @Override
-    public void addFirst(RandType item) {
+    public void addFirst(T item) {
         RandNode newNode = new RandNode(item);
         // set prev and next for newNode;
         newNode.prev = sentinel;
@@ -127,7 +127,7 @@ public class LinkedListDeque<RandType> implements Iterable<RandType>, Deque<Rand
         size += 1;
     }
     @Override
-    public void addLast(RandType item) {
+    public void addLast(T item) {
         RandNode newNode = new RandNode(item);
 
         // set ptrs for newNode;
@@ -161,7 +161,7 @@ public class LinkedListDeque<RandType> implements Iterable<RandType>, Deque<Rand
     }
 
     @Override
-    public RandType removeFirst() {
+    public T removeFirst() {
         if (size == 0) return null;
         RandNode first = sentinel.next;
         // change the prev ptr of the second node
@@ -175,7 +175,7 @@ public class LinkedListDeque<RandType> implements Iterable<RandType>, Deque<Rand
     }
 
     @Override
-    public RandType removeLast() {
+    public T removeLast() {
         if (size == 0) return null;
         RandNode last = sentinel.prev;
 
@@ -203,7 +203,7 @@ public class LinkedListDeque<RandType> implements Iterable<RandType>, Deque<Rand
 
     // public function to get the item property from the private helper
     @Override
-    public RandType get(int index) {
+    public T get(int index) {
         return getNode(index).item;
     }
 
